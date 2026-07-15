@@ -6,181 +6,111 @@
   <title>Legends Golf Club - Club Repair Requests</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f4f4f4; color: #333; }
-    .card { max-width: 420px; margin: 40px auto; background: white; padding: 30px; border-radius: 16px; box-shadow: 0 6px 25px rgba(0,0,0,0.12); }
+    .card { max-width: 500px; margin: 40px auto; background: white; padding: 30px; border-radius: 16px; box-shadow: 0 6px 25px rgba(0,0,0,0.12); }
     button { width: 100%; padding: 16px; margin: 10px 0; background: #1a3c34; color: white; border: none; border-radius: 10px; font-size: 1.1rem; cursor: pointer; }
-    button.secondary { background: #555; }
     input, select, textarea { width: 100%; padding: 14px; margin: 8px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
-    .hidden { display: none; }
-    table { width: 100%; border-collapse: collapse; background: white; margin-top: 15px; }
-    th, td { padding: 10px; border-bottom: 1px solid #ddd; text-align: left; }
-    .status { padding: 5px 10px; border-radius: 15px; font-size: 0.85rem; }
+    .tab { display: flex; margin-bottom: 20px; }
+    .tab button { flex: 1; padding: 15px; background: #1a3c34; color: white; border: none; font-size: 1.05rem; }
+    .tab button.active { background: #0f2a24; }
     .pricing { background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0; }
+    iframe { border: none; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
   </style>
 </head>
 <body>
 
-  <!-- LOGIN SCREEN -->
-  <div id="loginCard" class="card">
+  <div class="card">
     <h1 style="text-align:center; color:#1a3c34;">Legends Golf Club</h1>
     <h2 style="text-align:center;">Club Repair Requests</h2>
 
-    <button onclick="goToMember()">I'm a Member - Submit Request</button>
-    <button onclick="showStaffLogin()" class="secondary">Staff Login</button>
-
-    <div id="staffLoginSection" class="hidden">
-      <p style="text-align:center; margin:15px 0 5px;">Enter staff password:</p>
-      <input type="password" id="staffPassword" placeholder="Password">
-      <button onclick="loginAsStaff()">Login as Staff</button>
-      <button onclick="hideStaffLogin()" class="secondary">Cancel</button>
-      <p style="font-size:0.85rem; color:#666; text-align:center; margin-top:10px;">Password: legends</p>
+    <!-- Tabs -->
+    <div class="tab">
+      <button onclick="showTab(0)" class="active" id="tab0">Submit Request</button>
+      <button onclick="showTab(1)" id="tab1">Staff View</button>
     </div>
-  </div>
 
-  <!-- MAIN APP -->
-  <div id="mainApp" class="hidden">
-    <div style="max-width:1100px; margin:0 auto;">
-      <div style="background:#1a3c34; color:white; padding:15px; text-align:center; border-radius:12px 12px 0 0; position:relative;">
-        <h2 style="margin:0;">Legends Golf Club - Club Repair Requests</h2>
-        <button onclick="logout()" style="position:absolute; top:15px; right:15px; background:#c0392b; padding:8px 16px; font-size:0.85rem; width:auto;">Logout</button>
+    <!-- MEMBER FORM -->
+    <div id="memberSection">
+      <form id="repairForm">
+        <label>Member Name</label>
+        <input type="text" id="name" required>
+
+        <label>Email or Phone</label>
+        <input type="text" id="contact" required>
+
+        <label>Service Type</label>
+        <select id="serviceType" required>
+          <option value="">Select...</option>
+          <option value="Reshaft">Reshaft</option>
+          <option value="Regrip">Regrip</option>
+          <option value="Other">Other / General Repair</option>
+        </select>
+
+        <label>Club Type</label>
+        <input type="text" id="clubType" required placeholder="e.g. Driver, 7-Iron">
+
+        <label>Issue Description</label>
+        <textarea id="description" rows="4" required></textarea>
+
+        <label>Urgency</label>
+        <select id="urgency">
+          <option value="Standard">Standard (3-5 days)</option>
+          <option value="Rush">Rush (1-2 days)</option>
+        </select>
+
+        <label>Photo (optional)</label>
+        <input type="file" id="photo" accept="image/*">
+
+        <button type="submit">Submit Repair Request</button>
+      </form>
+
+      <div class="pricing">
+        <strong>Reshafts:</strong> $25 (1 club) • $20/club (2-5) • $15/club (6+)<br>
+        <strong>Regrips:</strong> $5 labor per club + grip cost<br><br>
+        <a href="https://www.globalgolf.com/golf-accessories/grips/" target="_blank">Look up current grip prices →</a>
       </div>
+    </div>
 
-      <!-- Tabs -->
-      <div style="display:flex; background:white;">
-        <button onclick="showTab(0)" id="tab0" style="flex:1; padding:15px; border:none; background:#1a3c34; color:white; font-size:1.05rem;">Submit Request</button>
-        <button onclick="showTab(1)" id="tab1" style="flex:1; padding:15px; border:none; background:white; color:#1a3c34; font-size:1.05rem;">Track Repairs (Staff)</button>
-      </div>
-
-      <!-- MEMBER FORM -->
-      <div id="memberSection" style="padding:20px; background:white; border-radius:0 0 12px 12px;">
-        <form id="repairForm">
-          <label>Member Name</label>
-          <input type="text" id="name" required>
-
-          <label>Email or Phone</label>
-          <input type="text" id="contact" required>
-
-          <label>Service Type</label>
-          <select id="serviceType" required>
-            <option value="">Select...</option>
-            <option value="Reshaft">Reshaft</option>
-            <option value="Regrip">Regrip</option>
-            <option value="Other">Other / General Repair</option>
-          </select>
-
-          <label>Club Type</label>
-          <input type="text" id="clubType" required placeholder="e.g. Driver, 7-Iron">
-
-          <label>Issue Description</label>
-          <textarea id="description" rows="4" required></textarea>
-
-          <label>Urgency</label>
-          <select id="urgency">
-            <option value="Standard">Standard (3-5 days)</option>
-            <option value="Rush">Rush (1-2 days)</option>
-          </select>
-
-          <label>Photo (optional)</label>
-          <input type="file" id="photo" accept="image/*">
-
-          <button type="submit" style="margin-top:15px;">Submit Repair Request</button>
-        </form>
-      </div>
-
-      <!-- STAFF DASHBOARD -->
-      <div id="staffSection" class="hidden" style="padding:20px; background:white; border-radius:0 0 12px 12px;">
-        <div class="pricing">
-          <strong>Reshafts:</strong> $25 (1 club) • $20/club (2-5) • $15/club (6+)<br>
-          <strong>Regrips:</strong> $5 labor per club + grip cost<br><br>
-          <a href="https://www.globalgolf.com/golf-accessories/grips/" target="_blank" style="color:#1a3c34; font-weight:bold;">Look up current grip prices →</a>
-        </div>
-
-        <button onclick="loadRepairs()" style="width:auto; padding:10px 20px; margin-bottom:15px;">Refresh List</button>
-
-        <table id="repairsTable">
-          <thead>
-            <tr>
-              <th>ID</th><th>Date</th><th>Member</th><th>Service</th><th>Club</th>
-              <th>Technician</th><th>Status</th><th>Update</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
+    <!-- STAFF VIEW (Google Sheet Iframe) -->
+    <div id="staffSection" style="display:none;">
+      <p style="text-align:center; margin-bottom:15px;"><strong>Staff:</strong> Update status, assign technicians, and add notes directly below.</p>
+      
+      <!-- Replace the URL below with your actual Google Sheet edit link -->
+      <iframe 
+        src="https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID_HERE/edit?usp=sharing" 
+        width="100%" 
+        height="700"
+        allowfullscreen>
+      </iframe>
     </div>
   </div>
 
   <script>
     const BACKEND_URL = "https://script.google.com/macros/s/AKfycbzUzvcccC2aLCUnKAh6PC4Ni7es6nISGQhhPoeHQPJOIklNbUffD1HT_SvOY6BW7mnGZQ/exec";
 
-    let currentUser = null;
-    let repairsData = [];
-
-    function goToMember() {
-      currentUser = 'member';
-      document.getElementById('loginCard').classList.add('hidden');
-      document.getElementById('mainApp').classList.remove('hidden');
-      showTab(0);
-    }
-
-    function showStaffLogin() {
-      document.getElementById('staffLoginSection').classList.remove('hidden');
-    }
-
-    function hideStaffLogin() {
-      document.getElementById('staffLoginSection').classList.add('hidden');
-      document.getElementById('staffPassword').value = '';
-    }
-
-    function loginAsStaff() {
-      const pass = document.getElementById('staffPassword').value.trim().toLowerCase();
-      if (pass === 'legends') {
-        currentUser = 'staff';
-        document.getElementById('loginCard').classList.add('hidden');
-        document.getElementById('mainApp').classList.remove('hidden');
-        document.getElementById('staffLoginSection').classList.add('hidden');
-        showTab(1);
-      } else {
-        alert('Incorrect password');
-        document.getElementById('staffPassword').value = '';
-      }
-    }
-
-    function logout() {
-      currentUser = null;
-      document.getElementById('mainApp').classList.add('hidden');
-      document.getElementById('loginCard').classList.remove('hidden');
-      document.getElementById('staffLoginSection').classList.add('hidden');
-    }
-
     function showTab(tab) {
-      const memberSec = document.getElementById('memberSection');
-      const staffSec = document.getElementById('staffSection');
+      const member = document.getElementById('memberSection');
+      const staff = document.getElementById('staffSection');
       const tab0 = document.getElementById('tab0');
       const tab1 = document.getElementById('tab1');
 
       if (tab === 0) {
-        memberSec.style.display = 'block';
-        staffSec.style.display = 'none';
-        tab0.style.background = '#1a3c34';
-        tab0.style.color = 'white';
-        tab1.style.background = 'white';
-        tab1.style.color = '#1a3c34';
+        member.style.display = 'block';
+        staff.style.display = 'none';
+        tab0.classList.add('active');
+        tab1.classList.remove('active');
       } else {
-        memberSec.style.display = 'none';
-        staffSec.style.display = 'block';
-        tab0.style.background = 'white';
-        tab0.style.color = '#1a3c34';
-        tab1.style.background = '#1a3c34';
-        tab1.style.color = 'white';
-        loadRepairs();
+        member.style.display = 'none';
+        staff.style.display = 'block';
+        tab0.classList.remove('active');
+        tab1.classList.add('active');
       }
     }
 
-    // Submit new repair request
+    // Member form submission
     document.getElementById('repairForm').addEventListener('submit', async function(e) {
       e.preventDefault();
 
-      const repairData = {
+      const data = {
         action: "submit",
         id: 'R' + Date.now().toString().slice(-6),
         date: new Date().toLocaleDateString(),
@@ -196,113 +126,14 @@
         await fetch(BACKEND_URL, {
           method: 'POST',
           mode: 'no-cors',
-          body: JSON.stringify(repairData)
+          body: JSON.stringify(data)
         });
-
         alert('Repair request submitted successfully!');
         e.target.reset();
-      } catch (error) {
+      } catch (err) {
         alert('Submission failed. Please try again.');
       }
     });
-
-    // Load repairs - Improved version
-    async function loadRepairs() {
-      try {
-        const url = BACKEND_URL + '?t=' + Date.now(); // prevent caching
-        const response = await fetch(url, {
-          method: 'GET',
-          mode: 'cors',
-          cache: 'no-cache'
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        repairsData = data.slice(1).map(row => ({
-          id: row[0],
-          date: row[1],
-          name: row[2],
-          contact: row[3],
-          serviceType: row[4],
-          clubType: row[5],
-          description: row[6],
-          urgency: row[7],
-          technician: row[8] || '',
-          status: row[9] || 'Submitted',
-          notes: row[10] || ''
-        }));
-
-        renderTable();
-      } catch (error) {
-        console.error('Error loading repairs:', error);
-        alert('Could not load repair list. Please try again.');
-      }
-    }
-
-    function renderTable() {
-      const tbody = document.querySelector('#repairsTable tbody');
-      tbody.innerHTML = '';
-
-      repairsData.forEach((r, index) => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td>${r.id}</td>
-          <td>${r.date}</td>
-          <td>${r.name}</td>
-          <td>${r.serviceType || ''}</td>
-          <td>${r.clubType}</td>
-          <td>
-            <select onchange="updateRepairField(${index}, 'technician', this.value)">
-              <option value="">Unassigned</option>
-              <option value="Jeremy" ${r.technician === 'Jeremy' ? 'selected' : ''}>Jeremy</option>
-              <option value="Emma" ${r.technician === 'Emma' ? 'selected' : ''}>Emma</option>
-              <option value="Zane" ${r.technician === 'Zane' ? 'selected' : ''}>Zane</option>
-            </select>
-          </td>
-          <td><span class="status ${r.status.toLowerCase().replace(' ', '')}">${r.status}</span></td>
-          <td>
-            <select onchange="updateRepairField(${index}, 'status', this.value)">
-              <option value="Submitted" ${r.status === 'Submitted' ? 'selected' : ''}>Submitted</option>
-              <option value="In Progress" ${r.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
-              <option value="Ready for Pickup" ${r.status === 'Ready for Pickup' ? 'selected' : ''}>Ready for Pickup</option>
-              <option value="Completed" ${r.status === 'Completed' ? 'selected' : ''}>Completed</option>
-            </select>
-          </td>
-        `;
-        tbody.appendChild(row);
-      });
-    }
-
-    // Update technician or status
-    async function updateRepairField(index, field, value) {
-      const repair = repairsData[index];
-      const updates = {
-        action: "update",
-        id: repair.id
-      };
-      updates[field] = value;
-
-      try {
-        await fetch(BACKEND_URL, {
-          method: 'POST',
-          mode: 'no-cors',
-          body: JSON.stringify(updates)
-        });
-
-        setTimeout(() => {
-          loadRepairs();
-        }, 800);
-      } catch (error) {
-        alert('Update failed. Please try again.');
-      }
-    }
-
-    // Start on login screen
-    document.getElementById('loginCard').classList.remove('hidden');
   </script>
 </body>
 </html>
