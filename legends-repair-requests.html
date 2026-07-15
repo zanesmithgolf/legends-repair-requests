@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Legends Golf Club - Club Repair Requests</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f4f4f4; color: #333; }
+    .card { max-width: 420px; margin: 40px auto; background: white; padding: 30px; border-radius: 16px; box-shadow: 0 6px 25px rgba(0,0,0,0.12); }
+    h1, h2 { color: #1a3c34; text-align: center; }
+    button { width: 100%; padding: 16px; margin: 10px 0; background: #1a3c34; color: white; border: none; border-radius: 10px; font-size: 1.1rem; cursor: pointer; }
+    button.secondary { background: #555; }
+    input, select, textarea { width: 100%; padding: 14px; margin: 8px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 1rem; }
+    .hidden { display: none; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; font-size: 0.95rem; }
+    th, td { padding: 10px; border-bottom: 1px solid #ddd; text-align: left; }
+    .status { padding: 5px 10px; border-radius: 15px; font-size: 0.8rem; }
+    .pricing { background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0; }
+  </style>
+</head>
+<body>
+
+  <!-- LOGIN SCREEN -->
+  <div id="loginCard" class="card">
+    <h1>Legends Golf Club</h1>
+    <h2>Club Repair Requests</h2>
+
+    <button onclick="goToMember()">I'm a Member - Submit Request</button>
+
+    <button onclick="showStaffLogin()" class="secondary">Staff Login</button>
+
+    <!-- Staff Password Section (appears when Staff clicked) -->
+    <div id="staffLoginSection" class="hidden">
+      <p style="text-align:center; margin:15px 0 5px;">Enter staff password:</p>
+      <input type="password" id="staffPassword" placeholder="Password" style="margin-bottom:10px;">
+      <button onclick="loginAsStaff()">Login as Staff</button>
+      <button onclick="hideStaffLogin()" class="secondary">Cancel</button>
+      <p style="font-size:0.85rem; color:#666; text-align:center; margin-top:10px;">Password: legends</p>
+    </div>
+  </div>
+
+  <!-- MAIN APP (hidden until logged in) -->
+  <div id="mainApp" class="hidden">
+
+    <div style="max-width:1000px; margin:0 auto;">
+      <div style="background:#1a3c34; color:white; padding:15px; text-align:center; border-radius:12px 12px 0 0;">
+        <h2 style="margin:0;">Legends Golf Club - Club Repair Requests</h2>
+        <button onclick="logout()" style="position:absolute; top:20px; right:20px; background:#c0392b; padding:8px 16px; font-size:0.85rem; width:auto;">Logout</button>
+      </div>
+
+      <!-- Tabs -->
+      <div style="display:flex; background:white; border-bottom:2px solid #1a3c34;">
+        <button onclick="showTab(0)" id="tab0" style="flex:1; padding:15px; border:none; background:#1a3c34; color:white; font-size:1.05rem;">Submit Request</button>
+        <button onclick="showTab(1)" id="tab1" style="flex:1; padding:15px; border:none; background:white; color:#1a3c34; font-size:1.05rem;">Track Repairs (Staff)</button>
+      </div>
+
+      <!-- MEMBER FORM -->
+      <div id="memberSection" style="padding:20px; background:white; border-radius:0 0 12px 12px;">
+        <form id="repairForm">
+          <label>Member Name</label>
+          <input type="text" id="name" required>
+
+          <label>Email or Phone</label>
+          <input type="text" id="contact" required>
+
+          <label>Service Type</label>
+          <select id="serviceType" required>
+            <option value="">Select...</option>
+            <option value="Reshaft">Reshaft</option>
+            <option value="Regrip">Regrip</option>
+            <option value="Other">Other / General Repair</option>
+          </select>
+
+          <label>Club Type</label>
+          <input type="text" id="clubType" required placeholder="e.g. Driver, 7-Iron, Putter">
+
+          <label>Issue Description</label>
+          <textarea id="description" rows="4" required></textarea>
+
+          <label>Urgency</label>
+          <select id="urgency">
+            <option value="Standard">Standard (3-5 days)</option>
+            <option value="Rush">Rush (1-2 days)</option>
+          </select>
+
+          <label>Photo (optional)</label>
+          <input type="file" id="photo" accept="image/*">
+
+          <button type="submit" style="margin-top:15px;">Submit Repair Request</button>
+        </form>
+      </div>
+
+      <!-- STAFF DASHBOARD -->
+      <div id="staffSection" class="hidden" style="padding:20px; background:white; border-radius:0 0 12px 12px;">
+        <div class="pricing">
+          <strong>Reshafts:</strong> $25 (1 club) • $20/club (2-5) • $15/club (6+)<br>
+          <strong>Regrips:</strong> $5 labor per club + grip cost
+          <br><br>
+          <a href="https://www.globalgolf.com/golf-accessories/grips/" target="_blank" 
+             style="color:#1a3c34; font-weight:bold;">Look up current grip prices →</a>
+        </div>
+
+        <button onclick="exportCSV()" style="margin-bottom:15px; width:auto; padding:10px 20px;">Export to CSV</button>
+
+        <table id="repairsTable">
+          <thead>
+            <tr>
+              <th>ID</th><th>Date</th><th>Member</th><th>Service</th><th>Club</th>
+              <th>Technician</th><th>Status</th><th>Update</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let repairs = JSON.parse(localStorage.getItem('legendsRepairs')) || [];
+    let currentUser = null;
+
+    function goToMember() {
+      currentUser = 'member';
+      document.getElementById('loginCard').classList.add('hidden');
+      document.getElementById('mainApp').classList.remove('hidden');
+      showTab(0);
+    }
+
+    function showStaffLogin() {
+      document.getElementById('staffLoginSection').classList.remove('hidden');
+    }
+
+    function hideStaffLogin() {
+      document.getElementById('staffLoginSection').classList.add('hidden');
+      document.getElementById('staffPassword').value = '';
+    }
+
+    function loginAsStaff() {
+      const pass = document.getElementById('staffPassword').value.trim().toLowerCase();
+      if (pass === 'legends') {
+        currentUser = 'staff';
+        document.getElementById('loginCard').classList.add('hidden');
+        document.getElementById('mainApp').classList.remove('hidden');
+        document.getElementById('staffLoginSection').classList.add('hidden');
+        showTab(1);
+      } else {
+        alert('Incorrect password. Try again.');
+        document.getElementById('staffPassword').value = '';
+      }
+    }
+
+    function logout() {
+      currentUser = null;
+      document.getElementById('mainApp').classList.add('hidden');
+      document.getElementById('loginCard').classList.remove('hidden');
+      document.getElementById('staffLoginSection').classList.add('hidden');
+      document.getElementById('staffPassword').value = '';
+    }
+
+    function showTab(tab) {
+      const memberSec = document.getElementById('memberSection');
+      const staffSec = document.getElementById('staffSection');
+      const tab0 = document.getElementById('tab0');
+      const tab1 = document.getElementById('tab1');
+
+      if (tab === 0) {
+        memberSec.style.display = 'block';
+        staffSec.style.display = 'none';
+        tab0.style.background = '#1a3c34';
+        tab0.style.color = 'white';
+        tab1.style.background = 'white';
+        tab1.style.color = '#1a3c34';
+      } else {
+        memberSec.style.display = 'none';
+        staffSec.style.display = 'block';
+        tab0.style.background = 'white';
+        tab0.style.color = '#1a3c34';
+        tab1.style.background = '#1a3c34';
+        tab1.style.color = 'white';
+        renderTable();
+      }
+    }
+
+    function renderTable() {
+      const tbody = document.querySelector('#repairsTable tbody');
+      tbody.innerHTML = '';
+      repairs.forEach((r, i) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${r.id}</td>
+          <td>${r.date}</td>
+          <td>${r.name}</td>
+          <td>${r.serviceType || ''}</td>
+          <td>${r.clubType}</td>
+          <td>
+            <select onchange="assignTechnician(${i}, this.value)">
+              <option value="">Unassigned</option>
+              <option value="Jeremy" ${r.technician==='Jeremy'?'selected':''}>Jeremy</option>
+              <option value="Emma" ${r.technician==='Emma'?'selected':''}>Emma</option>
+              <option value="Zane" ${r.technician==='Zane'?'selected':''}>Zane</option>
+            </select>
+          </td>
+          <td><span class="status ${r.status.toLowerCase().replace(' ','')}">${r.status}</span></td>
+          <td>
+            <select onchange="updateStatus(${i}, this.value)">
+              <option value="Submitted" ${r.status==='Submitted'?'selected':''}>Submitted</option>
+              <option value="In Progress" ${r.status==='In Progress'?'selected':''}>In Progress</option>
+              <option value="Ready for Pickup" ${r.status==='Ready for Pickup'?'selected':''}>Ready</option>
+              <option value="Completed" ${r.status==='Completed'?'selected':''}>Completed</option>
+            </select>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    function assignTechnician(i, tech) {
+      repairs[i].technician = tech;
+      localStorage.setItem('legendsRepairs', JSON.stringify(repairs));
+      renderTable();
+    }
+
+    function updateStatus(i, status) {
+      repairs[i].status = status;
+      localStorage.setItem('legendsRepairs', JSON.stringify(repairs));
+      renderTable();
+    }
+
+    function exportCSV() {
+      let csv = "ID,Date,Member,Contact,Service,Club,Issue,Urgency,Technician,Status\n";
+      repairs.forEach(r => {
+        csv += `"${r.id}","${r.date}","${r.name}","${r.contact}","${r.serviceType||''}","${r.clubType}","${r.description}","${r.urgency}","${r.technician||''}","${r.status}"\n`;
+      });
+      const blob = new Blob([csv], {type:'text/csv'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'legends_repairs.csv';
+      a.click();
+    }
+
+    // Form submit
+    document.getElementById('repairForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const repair = {
+        id: 'R' + Date.now().toString().slice(-6),
+        date: new Date().toLocaleDateString(),
+        name: document.getElementById('name').value,
+        contact: document.getElementById('contact').value,
+        serviceType: document.getElementById('serviceType').value,
+        clubType: document.getElementById('clubType').value,
+        description: document.getElementById('description').value,
+        urgency: document.getElementById('urgency').value,
+        status: 'Submitted',
+        technician: ''
+      };
+      repairs.unshift(repair);
+      localStorage.setItem('legendsRepairs', JSON.stringify(repairs));
+      alert('Request submitted! Thank you.');
+      e.target.reset();
+    });
+
+    // Start on login screen
+    document.getElementById('loginCard').classList.remove('hidden');
+  </script>
+</body>
+</html>
