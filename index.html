@@ -7,14 +7,13 @@
   <style>
     body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f4f4f4; color: #333; }
     .card { max-width: 420px; margin: 40px auto; background: white; padding: 30px; border-radius: 16px; box-shadow: 0 6px 25px rgba(0,0,0,0.12); }
-    h1, h2 { color: #1a3c34; text-align: center; }
     button { width: 100%; padding: 16px; margin: 10px 0; background: #1a3c34; color: white; border: none; border-radius: 10px; font-size: 1.1rem; cursor: pointer; }
     button.secondary { background: #555; }
-    input, select, textarea { width: 100%; padding: 14px; margin: 8px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 1rem; }
+    input, select, textarea { width: 100%; padding: 14px; margin: 8px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
     .hidden { display: none; }
-    table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; font-size: 0.95rem; }
+    table { width: 100%; border-collapse: collapse; background: white; margin-top: 15px; }
     th, td { padding: 10px; border-bottom: 1px solid #ddd; text-align: left; }
-    .status { padding: 5px 10px; border-radius: 15px; font-size: 0.8rem; }
+    .status { padding: 5px 10px; border-radius: 15px; font-size: 0.85rem; }
     .pricing { background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0; }
   </style>
 </head>
@@ -22,34 +21,31 @@
 
   <!-- LOGIN SCREEN -->
   <div id="loginCard" class="card">
-    <h1>Legends Golf Club</h1>
-    <h2>Club Repair Requests</h2>
+    <h1 style="text-align:center; color:#1a3c34;">Legends Golf Club</h1>
+    <h2 style="text-align:center;">Club Repair Requests</h2>
 
     <button onclick="goToMember()">I'm a Member - Submit Request</button>
-
     <button onclick="showStaffLogin()" class="secondary">Staff Login</button>
 
-    <!-- Staff Password Section (appears when Staff clicked) -->
     <div id="staffLoginSection" class="hidden">
       <p style="text-align:center; margin:15px 0 5px;">Enter staff password:</p>
-      <input type="password" id="staffPassword" placeholder="Password" style="margin-bottom:10px;">
+      <input type="password" id="staffPassword" placeholder="Password">
       <button onclick="loginAsStaff()">Login as Staff</button>
       <button onclick="hideStaffLogin()" class="secondary">Cancel</button>
       <p style="font-size:0.85rem; color:#666; text-align:center; margin-top:10px;">Password: legends</p>
     </div>
   </div>
 
-  <!-- MAIN APP (hidden until logged in) -->
+  <!-- MAIN APP -->
   <div id="mainApp" class="hidden">
-
-    <div style="max-width:1000px; margin:0 auto;">
-      <div style="background:#1a3c34; color:white; padding:15px; text-align:center; border-radius:12px 12px 0 0;">
+    <div style="max-width:1100px; margin:0 auto;">
+      <div style="background:#1a3c34; color:white; padding:15px; text-align:center; border-radius:12px 12px 0 0; position:relative;">
         <h2 style="margin:0;">Legends Golf Club - Club Repair Requests</h2>
-        <button onclick="logout()" style="position:absolute; top:20px; right:20px; background:#c0392b; padding:8px 16px; font-size:0.85rem; width:auto;">Logout</button>
+        <button onclick="logout()" style="position:absolute; top:15px; right:15px; background:#c0392b; padding:8px 16px; font-size:0.85rem; width:auto;">Logout</button>
       </div>
 
       <!-- Tabs -->
-      <div style="display:flex; background:white; border-bottom:2px solid #1a3c34;">
+      <div style="display:flex; background:white;">
         <button onclick="showTab(0)" id="tab0" style="flex:1; padding:15px; border:none; background:#1a3c34; color:white; font-size:1.05rem;">Submit Request</button>
         <button onclick="showTab(1)" id="tab1" style="flex:1; padding:15px; border:none; background:white; color:#1a3c34; font-size:1.05rem;">Track Repairs (Staff)</button>
       </div>
@@ -72,7 +68,7 @@
           </select>
 
           <label>Club Type</label>
-          <input type="text" id="clubType" required placeholder="e.g. Driver, 7-Iron, Putter">
+          <input type="text" id="clubType" required placeholder="e.g. Driver, 7-Iron">
 
           <label>Issue Description</label>
           <textarea id="description" rows="4" required></textarea>
@@ -94,13 +90,11 @@
       <div id="staffSection" class="hidden" style="padding:20px; background:white; border-radius:0 0 12px 12px;">
         <div class="pricing">
           <strong>Reshafts:</strong> $25 (1 club) • $20/club (2-5) • $15/club (6+)<br>
-          <strong>Regrips:</strong> $5 labor per club + grip cost
-          <br><br>
-          <a href="https://www.globalgolf.com/golf-accessories/grips/" target="_blank" 
-             style="color:#1a3c34; font-weight:bold;">Look up current grip prices →</a>
+          <strong>Regrips:</strong> $5 labor per club + grip cost<br><br>
+          <a href="https://www.globalgolf.com/golf-accessories/grips/" target="_blank" style="color:#1a3c34; font-weight:bold;">Look up current grip prices →</a>
         </div>
 
-        <button onclick="exportCSV()" style="margin-bottom:15px; width:auto; padding:10px 20px;">Export to CSV</button>
+        <button onclick="loadRepairs()" style="width:auto; padding:10px 20px; margin-bottom:15px;">Refresh List</button>
 
         <table id="repairsTable">
           <thead>
@@ -116,8 +110,10 @@
   </div>
 
   <script>
-    let repairs = JSON.parse(localStorage.getItem('legendsRepairs')) || [];
+    const BACKEND_URL = "https://script.google.com/macros/s/AKfycbzUzvcccC2aLCUnKAh6PC4Ni7es6nISGQhhPoeHQPJOIklNbUffD1HT_SvOY6BW7mnGZQ/exec";
+
     let currentUser = null;
+    let repairsData = [];
 
     function goToMember() {
       currentUser = 'member';
@@ -144,7 +140,7 @@
         document.getElementById('staffLoginSection').classList.add('hidden');
         showTab(1);
       } else {
-        alert('Incorrect password. Try again.');
+        alert('Incorrect password');
         document.getElementById('staffPassword').value = '';
       }
     }
@@ -154,7 +150,6 @@
       document.getElementById('mainApp').classList.add('hidden');
       document.getElementById('loginCard').classList.remove('hidden');
       document.getElementById('staffLoginSection').classList.add('hidden');
-      document.getElementById('staffPassword').value = '';
     }
 
     function showTab(tab) {
@@ -177,14 +172,72 @@
         tab0.style.color = '#1a3c34';
         tab1.style.background = '#1a3c34';
         tab1.style.color = 'white';
+        loadRepairs();
+      }
+    }
+
+    // Submit new repair request (with no-cors fix)
+    document.getElementById('repairForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const repairData = {
+        action: "submit",
+        id: 'R' + Date.now().toString().slice(-6),
+        date: new Date().toLocaleDateString(),
+        name: document.getElementById('name').value,
+        contact: document.getElementById('contact').value,
+        serviceType: document.getElementById('serviceType').value,
+        clubType: document.getElementById('clubType').value,
+        description: document.getElementById('description').value,
+        urgency: document.getElementById('urgency').value
+      };
+
+      try {
+        await fetch(BACKEND_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          body: JSON.stringify(repairData)
+        });
+
+        alert('Repair request submitted successfully!');
+        e.target.reset();
+      } catch (error) {
+        alert('Submission failed. Please try again.');
+      }
+    });
+
+    // Load repairs from Google Sheet
+    async function loadRepairs() {
+      try {
+        const response = await fetch(BACKEND_URL);
+        const data = await response.json();
+        
+        repairsData = data.slice(1).map(row => ({
+          id: row[0],
+          date: row[1],
+          name: row[2],
+          contact: row[3],
+          serviceType: row[4],
+          clubType: row[5],
+          description: row[6],
+          urgency: row[7],
+          technician: row[8] || '',
+          status: row[9] || 'Submitted',
+          notes: row[10] || ''
+        }));
+
         renderTable();
+      } catch (error) {
+        console.error('Error loading repairs:', error);
+        alert('Could not load repair list.');
       }
     }
 
     function renderTable() {
       const tbody = document.querySelector('#repairsTable tbody');
       tbody.innerHTML = '';
-      repairs.forEach((r, i) => {
+
+      repairsData.forEach((r, index) => {
         const row = document.createElement('tr');
         row.innerHTML = `
           <td>${r.id}</td>
@@ -193,20 +246,20 @@
           <td>${r.serviceType || ''}</td>
           <td>${r.clubType}</td>
           <td>
-            <select onchange="assignTechnician(${i}, this.value)">
+            <select onchange="updateRepairField(${index}, 'technician', this.value)">
               <option value="">Unassigned</option>
-              <option value="Jeremy" ${r.technician==='Jeremy'?'selected':''}>Jeremy</option>
-              <option value="Emma" ${r.technician==='Emma'?'selected':''}>Emma</option>
-              <option value="Zane" ${r.technician==='Zane'?'selected':''}>Zane</option>
+              <option value="Jeremy" ${r.technician === 'Jeremy' ? 'selected' : ''}>Jeremy</option>
+              <option value="Emma" ${r.technician === 'Emma' ? 'selected' : ''}>Emma</option>
+              <option value="Zane" ${r.technician === 'Zane' ? 'selected' : ''}>Zane</option>
             </select>
           </td>
-          <td><span class="status ${r.status.toLowerCase().replace(' ','')}">${r.status}</span></td>
+          <td><span class="status ${r.status.toLowerCase().replace(' ', '')}">${r.status}</span></td>
           <td>
-            <select onchange="updateStatus(${i}, this.value)">
-              <option value="Submitted" ${r.status==='Submitted'?'selected':''}>Submitted</option>
-              <option value="In Progress" ${r.status==='In Progress'?'selected':''}>In Progress</option>
-              <option value="Ready for Pickup" ${r.status==='Ready for Pickup'?'selected':''}>Ready</option>
-              <option value="Completed" ${r.status==='Completed'?'selected':''}>Completed</option>
+            <select onchange="updateRepairField(${index}, 'status', this.value)">
+              <option value="Submitted" ${r.status === 'Submitted' ? 'selected' : ''}>Submitted</option>
+              <option value="In Progress" ${r.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+              <option value="Ready for Pickup" ${r.status === 'Ready for Pickup' ? 'selected' : ''}>Ready for Pickup</option>
+              <option value="Completed" ${r.status === 'Completed' ? 'selected' : ''}>Completed</option>
             </select>
           </td>
         `;
@@ -214,50 +267,29 @@
       });
     }
 
-    function assignTechnician(i, tech) {
-      repairs[i].technician = tech;
-      localStorage.setItem('legendsRepairs', JSON.stringify(repairs));
-      renderTable();
-    }
-
-    function updateStatus(i, status) {
-      repairs[i].status = status;
-      localStorage.setItem('legendsRepairs', JSON.stringify(repairs));
-      renderTable();
-    }
-
-    function exportCSV() {
-      let csv = "ID,Date,Member,Contact,Service,Club,Issue,Urgency,Technician,Status\n";
-      repairs.forEach(r => {
-        csv += `"${r.id}","${r.date}","${r.name}","${r.contact}","${r.serviceType||''}","${r.clubType}","${r.description}","${r.urgency}","${r.technician||''}","${r.status}"\n`;
-      });
-      const blob = new Blob([csv], {type:'text/csv'});
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'legends_repairs.csv';
-      a.click();
-    }
-
-    // Form submit
-    document.getElementById('repairForm').addEventListener('submit', function(e) {
-      e.preventDefault();
-      const repair = {
-        id: 'R' + Date.now().toString().slice(-6),
-        date: new Date().toLocaleDateString(),
-        name: document.getElementById('name').value,
-        contact: document.getElementById('contact').value,
-        serviceType: document.getElementById('serviceType').value,
-        clubType: document.getElementById('clubType').value,
-        description: document.getElementById('description').value,
-        urgency: document.getElementById('urgency').value,
-        status: 'Submitted',
-        technician: ''
+    // Update technician or status (with no-cors fix)
+    async function updateRepairField(index, field, value) {
+      const repair = repairsData[index];
+      const updates = {
+        action: "update",
+        id: repair.id
       };
-      repairs.unshift(repair);
-      localStorage.setItem('legendsRepairs', JSON.stringify(repairs));
-      alert('Request submitted! Thank you.');
-      e.target.reset();
-    });
+      updates[field] = value;
+
+      try {
+        await fetch(BACKEND_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          body: JSON.stringify(updates)
+        });
+
+        setTimeout(() => {
+          loadRepairs();
+        }, 800);
+      } catch (error) {
+        alert('Update failed. Please try again.');
+      }
+    }
 
     // Start on login screen
     document.getElementById('loginCard').classList.remove('hidden');
