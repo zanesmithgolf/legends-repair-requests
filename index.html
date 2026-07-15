@@ -176,7 +176,7 @@
       }
     }
 
-    // Submit new repair request (with no-cors fix)
+    // Submit new repair request
     document.getElementById('repairForm').addEventListener('submit', async function(e) {
       e.preventDefault();
 
@@ -206,21 +206,22 @@
       }
     });
 
-    // Load repairs from Google Sheet (improved version)
+    // Load repairs - Improved version
     async function loadRepairs() {
       try {
-        const url = BACKEND_URL + '?t=' + Date.now(); // cache busting
+        const url = BACKEND_URL + '?t=' + Date.now(); // prevent caching
         const response = await fetch(url, {
           method: 'GET',
-          mode: 'cors'
+          mode: 'cors',
+          cache: 'no-cache'
         });
 
         if (!response.ok) {
-          throw new Error('Network response was not ok');
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
 
         const data = await response.json();
-        
+
         repairsData = data.slice(1).map(row => ({
           id: row[0],
           date: row[1],
@@ -238,7 +239,7 @@
         renderTable();
       } catch (error) {
         console.error('Error loading repairs:', error);
-        alert('Could not load repair list. Please try again or contact support.');
+        alert('Could not load repair list. Please try again.');
       }
     }
 
@@ -276,7 +277,7 @@
       });
     }
 
-    // Update technician or status (with no-cors fix)
+    // Update technician or status
     async function updateRepairField(index, field, value) {
       const repair = repairsData[index];
       const updates = {
